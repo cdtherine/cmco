@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Game Style Text Adventure</title>
+  <style>
+    /* Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    /* Fullscreen black background, white text */
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: "Courier New", Courier, monospace;
+      height: 100vh;
+      overflow: hidden; /* Prevent page scrolling */
+    }
+    /* Game container to center content */
+    .game-container {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      height: 100%;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    /* Text log area which scrolls */
+    #text-log {
+      overflow-y: auto;
+      height: calc(100% - 120px); /* Leaves space for fixed choices area */
+      margin-bottom: 20px;
+      padding-right: 10px; /* Space for scrollbar */
+    }
+    .game-line {
+      margin-bottom: 10px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    /* Fixed choices container at the bottom */
+    .choices {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .choices button {
+      background-color: #333;
+      color: #fff;
+      border: 2px solid #555;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      text-align: left;
+    }
+    .choices button:hover {
+      background-color: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div id="text-log"></div>
+    <div class="choices" id="choices"></div>
+  </div>
+  
+  <script>
+    // Define the story nodes with your prompts and responses.
+    const storyNodes = {
+      start: {
+        text: "Today, you are Catherine, and you are thirteen years old. You belong to a friend group of outcasts who are segregated in the lunchroom. The delinquent boys who sit at the table next to you like to stab pencils into each other’s heads to test the limits of human fortitude, if that gives you a sense of where you’re at socially.",
+        choices: [
+          { text: "Why am I an outcast?", next: "node2" }
+        ]
+      },
+      node2: {
+        text: "You are Chinese, and you live in a white town.",
+        choices: [
+          { text: "But Ethan Yu is Chinese, and he sits across the lunch room with the cool guys.", next: "node3" }
+        ]
+      },
+      node3: {
+        text: "Yeah, I just said that to make you feel better. The real reason is that when the popular girls put you in their Instagram group chat in the sixth grade, you kept telling them that you couldn’t understand what “u” meant because “u” was just a letter, and they should’ve been spelling out “you” unless they were st-u-pid. They stopped putting you in group chats after that.",
+        choices: [
+          { text: "I remember. Let’s just move on.", next: "node4" }
+        ]
+      },
+      node4: {
+        text: "Recently, you and your friends have become aware of concepts like race, gender, sexuality, and a variety of political identities. Your new and irregular period is making you agitated, although you won’t admit that because it doesn’t seem feminist. You are an anarcho-communist.",
+        choices: [
+          { text: "What is an anarcho-communist?", next: "node5" }
+        ]
+      },
+      node5: {
+        text: "You don’t know.",
+        choices: [
+          { text: "Restart", next: "start" }
+        ]
+      }
+    };
+  
+    // References to the DOM elements.
+    const textLog = document.getElementById('text-log');
+    const choicesContainer = document.getElementById('choices');
+  
+    /**
+     * Types out text letter-by-letter into a given element.
+     * Adds an extra pause when a period is typed.
+     * @param {HTMLElement} element - The element where text will appear.
+     * @param {string} text - The text to type.
+     * @param {number} baseSpeed - The base delay (in ms) per character.
+     * @param {function} callback - A function to call once typing is complete.
+     */
+    function typeText(element, text, baseSpeed, callback) {
+      let i = 0;
+      function type() {
+        if (i < text.length) {
+          const letter = text.charAt(i);
+          element.textContent += letter;
+          i++;
+          textLog.scrollTop = textLog.scrollHeight; // Auto-scroll the log.
+          // Calculate delay with a bit of random variation.
+          let delay = baseSpeed + Math.random() * 5;
+          // If the character is a period, add an extra pause.
+          if (letter === '.' || letter === ',') {
+            delay += 300; // Extra pause of 300ms.
+          }
+          setTimeout(type, delay);
+        } else if (callback) {
+          callback();
+        }
+      }
+      type();
+    }
+  
+    // Function to display a story node.
+    function displayNode(nodeKey) {
+      const node = storyNodes[nodeKey];
+  
+      // Create a new empty div for the prompt text.
+      const line = document.createElement('div');
+      line.classList.add('game-line');
+      textLog.appendChild(line);
+  
+      // Type out the node's text with a base speed of 50ms per letter.
+      typeText(line, node.text, 15, function() {
+        // Once the prompt is fully typed, clear any previous choices.
+        choicesContainer.innerHTML = '';
+        
+        // Create a button for each available choice.
+        node.choices.forEach(choice => {
+          const button = document.createElement('button');
+          button.textContent = choice.text;
+          button.addEventListener('click', () => {
+            // Append the user's response instantly.
+            const userLine = document.createElement('div');
+            userLine.classList.add('game-line');
+            userLine.textContent = "> " + choice.text;
+            textLog.appendChild(userLine);
+            textLog.scrollTop = textLog.scrollHeight;
+            
+            // Clear the choices to prevent further clicks.
+            choicesContainer.innerHTML = '';
+  
+            // After a brief pause, display the next node.
+            setTimeout(() => {
+              displayNode(choice.next);
+            }, 500);
+          });
+          choicesContainer.appendChild(button);
+        });
+      });
+    }
+  
+    // Start the story.
+    displayNode('start');
+  </script>
+
+</body>
+</html>
