@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>title</title>
+  <title>Interactive Story</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     /* Reset */
     * {
@@ -21,7 +22,7 @@
     /* Game container to center content */
     .game-container {
       position: relative;
-      width: 100%;
+      width: 90%;  /* Adjusted for mobile responsiveness */
       max-width: 800px;
       height: 100%;
       margin: 0 auto;
@@ -57,6 +58,7 @@
       cursor: pointer;
       font-size: 1rem;
       text-align: left;
+      font-family: inherit; /* Inherits the page's font */
     }
     .choices button:hover {
       background-color: #444;
@@ -70,10 +72,13 @@
   </div>
   
   <script>
-    // Define the story nodes with your prompts and responses.
+    // Global variable to track fast-forwarding.
+    let fastForward = false;
+  
+    // Define the story nodes.
     const storyNodes = {
       start: {
-        text: "Today, you are Catherine, and you are thirteen years old. You belong to a friend group of outcasts who are segregated in the lunchroom. The delinquent boys who sit at the table next to you like to stab pencils into each other’s heads to test the limits of human fortitude, if that gives you a sense of where you’re at socially.",
+        text: "Today, you are Catherine, and you are thirteen years old. You belong to a friend group of outcasts who are segregated in the lunchroom. The delinquent boys who sit at the table next to you like to stab pencils into each other’s heads to test the limits of human fortitude, if that gives you some sense of where you’re at socially.",
         choices: [
           { text: "Why am I an outcast?", next: "node2" }
         ]
@@ -99,7 +104,31 @@
       node5: {
         text: "You don’t know.",
         choices: [
-          { text: "Restart", next: "start" }
+          { text: "Great. What am I doing right now?", next: "node6" }
+        ]
+      },
+      node6: {
+        text: "You’re walking into social studies. Mr. Halvorson is at the door. He’s telling you to draw a card.",
+        choices: [
+          { text: "<i>Draw a card</i>", next: "node7" }
+        ]
+      },
+      node7: {
+        text: "You draw an 8 of hearts. Students trickle in behind you; they draw cards too.<br>Mr. Halvorson: “If you drew a number card, you’re Black.”",
+        choices: [
+          { text: "Cool?", next: "node8" }
+        ]
+      },
+      node8: {
+        text: "Mr. Halvorson: “If you drew a face card—so King, Queen, Jack—you’re white.”",
+        choices: [
+          { text: "Uh-oh.", next: "node9" }
+        ]
+      },
+      node9: {
+        text: "Mr. Halvorson: “And we’re in apartheid South Africa.”",
+        choices: [
+          { text: "…", next: "start" }
         ]
       }
     };
@@ -110,7 +139,9 @@
   
     /**
      * Types out text letter-by-letter into a given element.
-     * Adds an extra pause when a period is typed.
+     * Uses innerHTML so that any embedded HTML (like <br> or <i>) is rendered.
+     * Adds an extra pause when a period or comma is typed.
+     * If fast-forward is active, the remaining text is immediately displayed.
      * @param {HTMLElement} element - The element where text will appear.
      * @param {string} text - The text to type.
      * @param {number} baseSpeed - The base delay (in ms) per character.
@@ -121,14 +152,19 @@
       function type() {
         if (i < text.length) {
           const letter = text.charAt(i);
-          element.textContent += letter;
+          element.innerHTML += letter;
           i++;
-          textLog.scrollTop = textLog.scrollHeight; // Auto-scroll the log.
-          // Calculate delay with a bit of random variation.
+          textLog.scrollTop = textLog.scrollHeight;
           let delay = baseSpeed + Math.random() * 5;
-          // If the character is a period, add an extra pause.
           if (letter === '.' || letter === ',') {
-            delay += 300; // Extra pause of 300ms.
+            delay += 300;
+          }
+          if (fastForward) {
+            element.innerHTML += text.substring(i);
+            i = text.length;
+            textLog.scrollTop = textLog.scrollHeight;
+            if (callback) callback();
+            return;
           }
           setTimeout(type, delay);
         } else if (callback) {
@@ -140,37 +176,35 @@
   
     // Function to display a story node.
     function displayNode(nodeKey) {
+      fastForward = false; // Reset fast-forward flag for new node.
       const node = storyNodes[nodeKey];
-  
-      // Create a new empty div for the prompt text.
       const line = document.createElement('div');
       line.classList.add('game-line');
       textLog.appendChild(line);
+      
+      // Add the fast-forward button in the choices area during typing.
+      choicesContainer.innerHTML = "";
+      const ffButton = document.createElement('button');
+      ffButton.innerHTML = "<i>Fast Forward</i>";
+      ffButton.addEventListener('click', function() {
+        fastForward = true;
+      });
+      choicesContainer.appendChild(ffButton);
   
-      // Type out the node's text with a base speed of 50ms per letter.
       typeText(line, node.text, 15, function() {
-        // Once the prompt is fully typed, clear any previous choices.
-        choicesContainer.innerHTML = '';
-        
-        // Create a button for each available choice.
+        // Once typing is complete, clear the fast-forward button and show actual choices.
+        choicesContainer.innerHTML = "";
         node.choices.forEach(choice => {
           const button = document.createElement('button');
-          button.textContent = choice.text;
+          button.innerHTML = choice.text;
           button.addEventListener('click', () => {
-            // Append the user's response instantly.
             const userLine = document.createElement('div');
             userLine.classList.add('game-line');
             userLine.textContent = "> " + choice.text;
             textLog.appendChild(userLine);
             textLog.scrollTop = textLog.scrollHeight;
-            
-            // Clear the choices to prevent further clicks.
-            choicesContainer.innerHTML = '';
-  
-            // After a brief pause, display the next node.
-            setTimeout(() => {
-              displayNode(choice.next);
-            }, 500);
+            // Immediately load the next node so that the fast-forward button reappears
+            displayNode(choice.next);
           });
           choicesContainer.appendChild(button);
         });
@@ -180,6 +214,6 @@
     // Start the story.
     displayNode('start');
   </script>
-
+  
 </body>
 </html>
