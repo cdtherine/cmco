@@ -6,63 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     /* Reset */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     /* Fullscreen black background, white text */
-    body {
-      background-color: #000;
-      color: #fff;
-      font-family: "Courier New", Courier, monospace;
-      height: 100vh;
-      overflow: hidden; /* Prevent page scrolling */
-    }
+    body { background-color: #000; color: #fff; font-family: "Courier New", Courier, monospace; height: 100vh; overflow: hidden; }
     /* Game container to center content */
-    .game-container {
-      position: relative;
-      width: 90%;  /* Adjusted for mobile responsiveness */
-      max-width: 800px;
-      height: 100%;
-      margin: 0 auto;
-      padding: 20px;
-    }
+    .game-container { position: relative; width: 90%; max-width: 800px; height: 100%; margin: 0 auto; padding: 20px; }
     /* Text log area which scrolls */
-    #text-log {
-      overflow-y: auto;
-      height: calc(100% - 120px); /* Leaves space for fixed choices area */
-      margin-bottom: 20px;
-      padding-right: 10px; /* Space for scrollbar */
-    }
-    .game-line {
-      margin-bottom: 10px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-    }
+    #text-log { overflow-y: auto; height: calc(100% - 120px); margin-bottom: 20px; padding-right: 10px; }
+    .game-line { margin-bottom: 10px; line-height: 1.5; white-space: pre-wrap; }
     /* Fixed choices container at the bottom */
-    .choices {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      right: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .choices button {
-      background-color: #333;
-      color: #fff;
-      border: 2px solid #555;
-      padding: 10px;
-      cursor: pointer;
-      font-size: 1rem;
-      text-align: left;
-      font-family: inherit; /* Inherits the page's font */
-    }
-    .choices button:hover {
-      background-color: #444;
-    }
+    .choices { position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .choices button { background-color: #333; color: #fff; border: 2px solid #555; padding: 10px; cursor: pointer; font-size: 1rem; text-align: left; font-family: inherit; }
+    .choices button:hover { background-color: #444; }
   </style>
 </head>
 <body>
@@ -70,83 +25,108 @@
     <div id="text-log"></div>
     <div class="choices" id="choices"></div>
   </div>
-  
   <script>
-    // Global variable to track fast-forwarding.
     let fastForward = false;
-  
-    // Define the story nodes.
+    const responseDelay = 500; // Delay before text appears (in ms)
+
     const storyNodes = {
-      start: {
-        text: "Today, you are Catherine, and you are thirteen years old. You belong to a friend group of outcasts who are segregated in the lunchroom. The delinquent boys who sit at the table next to you like to stab pencils into each other’s heads to test the limits of human fortitude, if that gives you some sense of where you’re at socially.",
+      start: { text: "Today, you are Catherine, and you are thirteen years old. You currently belong to a friend group of outcasts who are segregated in the lunchroom. The delinquent boys who sit at the table next to you like to stab pencils into each other’s heads to test the limits of human fortitude, if that gives you a sense of where you’re at socially.", choices: [ { text: "Why am I an outcast?", next: "node2" } ] },
+      node2: { text: "You are Chinese, and you live in a white town.", choices: [ { text: "But Ethan Yu is Chinese, and he sits across the lunch room with the cool guys.", next: "node3" } ] },
+      node3: { text: "Yeah, I just said that to make you feel better. The real reason is that when the popular girls put you in their Instagram group chat in the sixth grade, you kept telling them that you couldn’t understand what “u” meant because “u” was just a letter, and they should’ve been spelling out “you” unless they were st-u-pid. They stopped putting you in group chats after that.", choices: [ { text: "I remember. Let’s just move on.", next: "node4" } ] },
+      node4: { text: "Recently, you and your friends have become aware of concepts like race, gender, sexuality, and a variety of obscure political identities. Your new and irregular period is making you agitated, although you won’t admit it because it doesn’t seem feminist. You are an anarcho-communist.", choices: [ { text: "What is an anarcho-communist?", next: "node5" } ] },
+      node5: { text: "You don’t know.", choices: [ { text: "Great. What am I doing right now?", next: "node6" } ] },
+      node6: { text: "You’re walking into social studies. MR HALVORSON is at the door, fanning out a deck of cards. He’s telling you to draw one.", choices: [ { text: "Draw a card", next: "node7" } ] },
+      node7: { text: "You draw an 8 of hearts. Students trickle in behind you; they draw cards too. \n\nMR HALVORSON: “If you drew a number card, you’re black. If you drew a face card - so King, Queen, Jack - you’re white. And we are now in Apartheid South Africa.”", choices: [ { text: "…", next: "node8" } ] },
+      node8: { text: "MR HALVORSON makes you huddle in a corner with the other black people, who are actually mostly white. He gives some of you a pass that allows you to travel out of the corner. MR HALVORSON starts hurling insults at you and the other kids. “STUPID,” he shouts. You watch him grab a pool noodle to whack a girl for trying to exit the homelands. The girl starts crying.", choices: [ { text: "Is this historically accurate?", next: "node9" } ] },
+      node9: { text: "No, although you haven’t actually learned about Apartheid until this point, so, for all you know, it could be.", choices: [ { text: "He can’t get away with this. He’s making a kid cry!", next: "node10" } ] },
+      node10: { text: "Oh, but he can. Students have no power in this broken system. It’s MR HALVORSON, the bourgeoisie, against you and your fellow proletariat classmates. You’re nothing more but an expendable cog in his diabolical capitalist machine. God, it makes you sick! \n\nIn fact, for the past semester, you’ve been keeping track of all MR HALVORSON’s misdeeds in hopes of one day filing some sort of injunction against him. Some of these misdeeds include: \n\n• He found out that you and your friends were chatting on a 200+ page document called “The Meme Team” instead of paying attention in class, and you received your first disciplinary action since you were six, when you were reprimanded in the first grade for drawing fat Justin Bieber. While you humbly admit that you might’ve been in the wrong this time, MR HALVORSON later made you and your friends sit at the table nearest to his desk so he could monitor your Chromebook screens, and he seemed to cold call on you more often. Anyone with eyes could tell what a draconian and fascist overstep this was. \n\n• He played Christmas music during Christmas, which - although you celebrate Christmas - you believed was probably religiously offensive to people who didn’t celebrate Christmas. What happened to separation of church and state? He was basically proselytizing in class. Why wasn't this guy in jail? Or - since you're a prison abolitionist - why wasn't he in a Norwegian rehabilitation facility? \n\n• He is a conservative. \n\nBut making children role play Apartheid is a new low, even for him. The question is not whether he is fit to be an educator — that question was settled long ago. The question now is: Will you rise up and revolt?", choices: [ { text: "What the hell? No.", next: "node11" }, { text: "Yes, yes, I will!", next: "node12" } ] },
+      node11: { text: "Your prefrontal cortex hasn’t developed yet. Choose the other option.", choices: [ { text: "Yes, yes, I will!", next: "node12" } ] },
+      node12: { text: "The seeds of revolution are sowing in your mind.", choices: [ { text: "Go to lunch", next: "node13" } ] },
+      node13: { text: "You’re at lunch, eating the school’s cheesy flatbread or something that makes you equivalently sad. Sitting around you are two of your friends, SAM and ANA.", choices: [ { text: "Who’s SAM?", next: "node14" }, { text: "Who’s ANA?", next: "node17" }, { text: "Move on", next: "node20" } ] },
+      node14: { text: "SAM is your best friend. He was kicked out of his previous friend group for being gay and/or too intense about League of Legends. SAM is Brazilian, a fact that normally wouldn’t matter but that you are highly conscious of because you like to bond with him about feeling racially oppressed. \n\nEvery day after school, you Skype SAM to play video games and gossip for several hours. Sometimes your Skype calls last so long that you fall asleep and wake up in the morning to find the call still running. You and SAM have grown accustomed to each other’s silences. He is mean to you, and you are mean to him. He is the person you love most in your life.", choices: [ { text: "Who’s SAM?", next: "node14" }, { text: "Who’s ANA?", next: "node17" }, { text: "Move on", next: "node20" } ] },
+      node17: { text: "ANA is your friend? Her parents are both chess grandmasters from the Baltics, but she also says that her grandmother is possibly Native American, and you have arguments with her about whether this makes her racially oppressed. You say it doesn’t, but she likes to use brown skin tone emojis anyway, which you and SAM make fun of behind her back.", choices: [ { text: "Who’s SAM?", next: "node14" }, { text: "Who’s ANA?", next: "node17" }, { text: "Move on", next: "node20" } ] },
+      node20: { text: "SAM: “What’s your bra size?”", choices: [ { text: "“What? Why?”", next: "node21" } ] },
+      node21: { text: "SAM: “I was just wondering if they went into the negative alphabet.” \n\nANA, tapping on the table incessantly: “HAHAHAHAHA”", choices: [ { text: "“Can you stop tapping the table?”", next: "node22" } ] },
+      node22: { text: "ANA: “I have ADHD.”", choices: [ { text: "\"Since when did you have ADHD?\"", next: "node23" } ] },
+      node23: { text: "ANA: “I just got diagnosed yesterday. Now I take medication.”", choices: [ { text: "“What kind of medication?”", next: "node24" } ] },
+      node24: { text: "ANA: “I don’t remember! Oh my God. Why are you asking me so many questions?”", choices: [ { text: "“You’ve never done this table tapping thing before.”", next: "node25" } ] },
+      node25: { text: "ANA: “Yeah, okay. Invalidate the girl with mental illness. What the fuck.” \n\nANA goes to the bathroom to cry. You and SAM give each other knowing looks. You feel kind of bad, but you also feel like you just won some sort of competition.", choices: [ { text: "Go home", next: "node26" } ] },
+      node26: { text: "You are on the toilet, pooping. You’ve been holding it in since ten in the morning because you’re scared of school bathrooms. The relief is cathartic. \n\nSAM is calling you on Skype.", choices: [ { text: "Deny", next: "node27" } ] },
+      node27: { text: "He’s calling you again.", choices: [ { text: "Deny", next: "node28" } ] },
+      node28: { text: "He’s calling you again.", choices: [ { text: "Deny", next: "node29" } ] },
+      node29: { text: "You receive a text message from SAM. It says, “PICK UP UGLY BITCH.”", choices: [ { text: "Respond, “OMFG WAIT BITCH I’M POOPING”", next: "node30" } ] },
+      node30: { text: "Almost immediately after flushing, you start to ring SAM on Skype. He picks up.", choices: [ { text: "“I’m going to send MR HALVORSON an email about today. Can you help me draft it?”", next: "node31" } ] },
+      node31: { text: "SAM: “Are you stupid?”", choices: [ { text: "“Well, someone needs to do something! What he’s doing to kids is literally traumatic. He needs to be held accountable.”", next: "node32" } ] },
+      node32: { text: "SAM: “Okay. I’ll be on Minecraft when you’re done.”", choices: [ { text: "Draft the email", next: "node33"}]},
+      node33: { text: "How long should the email be?", choices: [ { text: "Short and to the point.", next: "node34"}, { text: "1000+ words.", next: "node35"}]},
+      node34: { text: "Lol.", choices: [ {text: "1000+ words", next: "node35"}]},
+      node35: {
+        text: "You spend about three hours working on this magnum opus of an email, which ends up straying away from the original topic of Apartheid and into a long rant about how MR HALVORSON is unjustly targeting you in class by cold-calling on and occasionally making eye contact with you. \n\nAfter you send it, he responds within an hour: \n\n“I think we should have a conversation because I am confused. Emailing me doesn’t help me understand what’s going on. Sent from my iPhone”",
+        choices: [ { text: "Awesome! Can I kill myself?", next: "node36" } ]
+      },
+
+      node36: {
+        text: "No. The next day, you are running the PACER test in gym class. You tap out at 25, panting. This is the worst of everyone in the class, including the girl with moderate asthma. With your heart beating in your ears, you see the principal standing in the corner near the door, staring straight at you. \n\nYour gym teacher tells you to change and follow the principal. You don’t know where you’re going, but you know what’s happening. They’re going to question you, force you to rat out your friends, kick you out, and blacklist you from all the other middle schools in the district. This is the beginning of the Third Red Scare. \n\nThe principal leads you to a dark interrogation room where MR HALVORSON is sitting in a circle with all of your other teachers. \n\nMR HALVORSON: “You’re not in trouble. We just wanted to have a conversation in person.”",
+        choices: [ { text: "“I’ll never have a conversation with you, you fascist!”", next: "node37"}, { text: "Start crying", next: "node38" }]
+      },
+
+      node37: {
+        text: "Nice try, but the tears start coming.",
+        choices: [ { text: "Start crying", next: "node38" } ]
+      },
+
+      node38: {
+        text: "You start crying.\n\nYou block out the rest of this memory. All you know is that you’re angry and sad, and you’ve failed to oust MR HALVORSON. You’re not as revolutionary as you thought you were.\n\nNow you have all this undirected rage. Where should it go?",
         choices: [
-          { text: "Why am I an outcast?", next: "node2" }
+          { text: "Take a few deep breaths and think rationally", next: "node39" },
+          { text: "Start a fight with ANA", next: "node41" }
         ]
       },
-      node2: {
-        text: "You are Chinese, and you live in a white town.",
-        choices: [
-          { text: "But Ethan Yu is Chinese, and he sits across the lunch room with the cool guys.", next: "node3" }
-        ]
+
+      node39: {
+        text: "NO NO NO NO NO",
+        choices: [ { text: "Start a fight with ANA", next: "node41" } ]
       },
-      node3: {
-        text: "Yeah, I just said that to make you feel better. The real reason is that when the popular girls put you in their Instagram group chat in the sixth grade, you kept telling them that you couldn’t understand what “u” meant because “u” was just a letter, and they should’ve been spelling out “you” unless they were st-u-pid. They stopped putting you in group chats after that.",
-        choices: [
-          { text: "I remember. Let’s just move on.", next: "node4" }
-        ]
+
+      node41: {
+        text: "You text ANA when you get home:\n\nok so i’m not telling you this because i hate you, i’m telling you this because i think it’s good to self reflect\n\nhonestly i feel really bad sending this\n\nbut basically i think you’re a pathological liar and i really don’t like talking to you?",
+        choices: [ { text: "I say that?", next: "node42" } ]
       },
-      node4: {
-        text: "Recently, you and your friends have become aware of concepts like race, gender, sexuality, and a variety of political identities. Your new and irregular period is making you agitated, although you won’t admit that because it doesn’t seem feminist. You are an anarcho-communist.",
-        choices: [
-          { text: "What is an anarcho-communist?", next: "node5" }
-        ]
+
+      node42: {
+        text: "Yeah. It’s honestly way worse.",
+        choices: [ { text: "And what does ANA say?", next: "node43" } ]
       },
-      node5: {
-        text: "You don’t know.",
-        choices: [
-          { text: "Great. What am I doing right now?", next: "node6" }
-        ]
+
+      node43: {
+        text: "You don’t really remember, to be honest. She’s defensive about it. But more than what she says, you remember what she does. She refuses to partner with you in gym class the next day, and you’re left partnering with the girl with asthma. Clearly this friendship is over.",
+        choices: [ { text: "Do I ever get in touch with them again?", next: "node45" } ]
       },
-      node6: {
-        text: "You’re walking into social studies. Mr. Halvorson is at the door. He’s telling you to draw a card.",
-        choices: [
-          { text: "<i>Draw a card</i>", next: "node7" }
-        ]
+
+      node45: {
+        text: "One summer, you try to find them on social media. ANA works at a nail salon in your hometown and appears to have turned Wasian. SAM has no digital footprint, and his name is too common to find any information about him online. All you have is his old Skype account.",
+        choices: [ { text: "Try to call him", next: "node46" } ]
       },
-      node7: {
-        text: "You draw an 8 of hearts. Students trickle in behind you; they draw cards too.<br>Mr. Halvorson: “If you drew a number card, you’re Black.”",
-        choices: [
-          { text: "Cool?", next: "node8" }
-        ]
+
+      node46: {
+        text: ". . .",
+        choices: [ { text: "Try to call him", next: "node47" } ]
       },
-      node8: {
-        text: "Mr. Halvorson: “If you drew a face card - so King, Queen, Jack - you’re white.”",
-        choices: [
-          { text: "Uh-oh.", next: "node9" }
-        ]
+
+      node47: {
+        text: ". . .",
+        choices: [ { text: "Try to call him", next: "node48" } ]
       },
-      node9: {
-        text: "Mr. Halvorson: “And we’re in apartheid South Africa.”",
-        choices: [
-          { text: "…", next: "start" }
-        ]
+
+      node48: {
+        text: ". . .\n\nSuddenly it strikes you that you have no memory of your last call. You were there when it happened, and yet you had no idea.",
+        choices: [ { text: "START OVER", next: "start" } ]
       }
     };
-  
-    // References to the DOM elements.
+
     const textLog = document.getElementById('text-log');
     const choicesContainer = document.getElementById('choices');
-  
-    /**
-     * Types out text letter-by-letter into a given element.
-     * Uses innerHTML so that any embedded HTML (like <br> or <i>) is rendered.
-     * Adds an extra pause when a period or comma is typed.
-     * If fast-forward is active, the remaining text is immediately displayed.
-     * @param {HTMLElement} element - The element where text will appear.
-     * @param {string} text - The text to type.
-     * @param {number} baseSpeed - The base delay (in ms) per character.
-     * @param {function} callback - A function to call once typing is complete.
-     */
+
     function typeText(element, text, baseSpeed, callback) {
       let i = 0;
       function type() {
@@ -155,8 +135,11 @@
           element.innerHTML += letter;
           i++;
           textLog.scrollTop = textLog.scrollHeight;
-          let delay = baseSpeed + Math.random() * 5;
-          if (letter === '. ' || letter === ', ') {
+          // vary speed slightly per letter
+          const variation = (Math.random() - 0.5) * baseSpeed * 0.3;
+          let delay = baseSpeed + variation;
+          // add pause after punctuation followed by space
+          if ((letter === '.' || letter === ',' || letter === '!' || letter === '?' || letter === '•' || letter === ':' || letter === '-' || letter === ';' || letter === '”') && text.charAt(i) === ' ') {
             delay += 300;
           }
           if (fastForward) {
@@ -173,47 +156,41 @@
       }
       type();
     }
-  
-    // Function to display a story node.
+
     function displayNode(nodeKey) {
-      fastForward = false; // Reset fast-forward flag for new node.
+      fastForward = false;
       const node = storyNodes[nodeKey];
       const line = document.createElement('div');
       line.classList.add('game-line');
       textLog.appendChild(line);
-      
-      // Add the fast-forward button in the choices area during typing.
+
       choicesContainer.innerHTML = "";
       const ffButton = document.createElement('button');
       ffButton.innerHTML = "<i>Fast Forward</i>";
-      ffButton.addEventListener('click', function() {
-        fastForward = true;
-      });
+      ffButton.addEventListener('click', () => fastForward = true);
       choicesContainer.appendChild(ffButton);
-  
-      typeText(line, node.text, 15, function() {
-        // Once typing is complete, clear the fast-forward button and show actual choices.
-        choicesContainer.innerHTML = "";
-        node.choices.forEach(choice => {
-          const button = document.createElement('button');
-          button.innerHTML = choice.text;
-          button.addEventListener('click', () => {
-            const userLine = document.createElement('div');
-            userLine.classList.add('game-line');
-            userLine.textContent = "> " + choice.text;
-            textLog.appendChild(userLine);
-            textLog.scrollTop = textLog.scrollHeight;
-            // Immediately load the next node so that the fast-forward button reappears
-            displayNode(choice.next);
+
+      setTimeout(() => {
+        typeText(line, node.text, 20, () => {
+          choicesContainer.innerHTML = "";
+          node.choices.forEach(choice => {
+            const button = document.createElement('button');
+            button.innerHTML = choice.text;
+            button.addEventListener('click', () => {
+              const userLine = document.createElement('div');
+              userLine.classList.add('game-line');
+              userLine.textContent = "> " + choice.text;
+              textLog.appendChild(userLine);
+              textLog.scrollTop = textLog.scrollHeight;
+              displayNode(choice.next);
+            });
+            choicesContainer.appendChild(button);
           });
-          choicesContainer.appendChild(button);
         });
-      });
+      }, responseDelay);
     }
-  
-    // Start the story.
+
     displayNode('start');
   </script>
-  
 </body>
 </html>
